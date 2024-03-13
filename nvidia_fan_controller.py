@@ -167,11 +167,11 @@ class ManualFanControl(AbstractContextManager):
     """ Context manager that sets manual fan control only for the duration of the context. """
     def __enter__(self):
         logger.debug("enabling manual gpu fan control")
-        run_cmd(['nvidia-settings', '--assign', 'GPUFanControlState=1'])
+        run_cmd(['nvidia-settings', '-c','0','--assign', 'GPUFanControlState=1'])
 
     def __exit__(self, exc_type, exc_value, traceback):
         logger.debug("disabling manual gpu fan control")
-        run_cmd(['nvidia-settings', '--assign', 'GPUFanControlState=0'])
+        run_cmd(['nvidia-settings', '-c','0','--assign', 'GPUFanControlState=0'])
 
 
 def run_cmd(cmd: List[str]) -> str:
@@ -202,7 +202,7 @@ def get_measurements() -> List[Tuple[int, int, int]]:
 
 
 def get_fan_speed(index: int) -> int:
-    fan_speed = run_cmd(['nvidia-settings', '--query', f'[fan-{index:d}]/GPUTargetFanSpeed', '--terse'])
+    fan_speed = run_cmd(['nvidia-settings', '-c','0','--query', f'[fan-{index:d}]/GPUTargetFanSpeed', '--terse'])
     logger.debug("Current fan speed setting: [fan-%d]/GPUTargetFanSpeed=%s", index, fan_speed)
     return int(fan_speed)
 
@@ -210,7 +210,7 @@ def get_fan_speed(index: int) -> int:
 def set_fan_speed(index: int, fan_speed: int) -> None:
     config = f'[fan-{index:d}]/GPUTargetFanSpeed={fan_speed:d}'
     logger.info("Setting new fan speed: %s", config)
-    run_cmd(['nvidia-settings', '--assign', config])
+    run_cmd(['nvidia-settings', '-c','0','--assign', config])
 
 
 def create_service_file(target_temperature: int = 60, interval_secs: int = 2) -> None:
