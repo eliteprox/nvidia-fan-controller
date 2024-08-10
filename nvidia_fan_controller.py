@@ -206,11 +206,11 @@ def get_fan_speed(index: int) -> int:
     logger.debug("Current fan speed setting: [fan-%d]/GPUTargetFanSpeed=%s", index, fan_speed)
     return int(fan_speed)
 
-
 def set_fan_speed(index: int, fan_speed: int) -> None:
     config = f'[fan-{index:d}]/GPUTargetFanSpeed={fan_speed:d}'
     logger.info("Setting new fan speed: %s", config)
     run_cmd(['nvidia-settings', '-c','0','--assign', config])
+
 
 
 def create_service_file(target_temperature: int = 60, interval_secs: int = 2) -> None:
@@ -248,7 +248,7 @@ def main() -> None:
 
     # give each GPU its own controller
     controllers = {
-        index: PIDController(x_target=args.target_temperature, u_min=10, u_max=100, u_start=max(temp / 0.9, speed), e_total_min=-10)
+        index: PIDController(x_target=args.target_temperature, u_min=30, u_max=100, u_start=max(temp / 0.9, speed), e_total_min=-10)
         for index, temp, speed in get_measurements()}
 
     with ManualFanControl():
@@ -261,6 +261,10 @@ def main() -> None:
                 # only update if change is non-trivial
                 if fan_speed != get_fan_speed(index):
                     set_fan_speed(index, fan_speed)
+                    if index > 0 and index <= 3:
+                        if fan_speed != get_fan_speed(index + 1):
+                            set_fan_speed(index + 1, fan_speed)
+
 
             sleep(args.interval_secs)
 
